@@ -64,6 +64,13 @@ const Home = () => {
               File a Report
             </button>
             <button
+              className="btn"
+              style={{ background: '#2563EB', color: '#fff', border: 'none' }}
+              onClick={() => navigate('/map')}
+            >
+              🗺️ Live Map Radar
+            </button>
+            <button
               className="btn ghost"
               onClick={() => navigate('/issues')}
             >
