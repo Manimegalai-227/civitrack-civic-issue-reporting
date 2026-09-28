@@ -48,6 +48,11 @@ const Navbar = () => {
               Report Issue
             </NavLink>
           </li>
+          <li>
+            <NavLink to="/map" onClick={closeMenu}>
+              🗺️ Map
+            </NavLink>
+          </li>
 
           {isAuthenticated ? (
             <>

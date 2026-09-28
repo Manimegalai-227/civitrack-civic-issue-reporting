@@ -12,6 +12,7 @@ import ReportIssue from './pages/ReportIssue';
 import AllIssues from './pages/AllIssues';
 import IssueDetails from './pages/IssueDetails';
 import MyReports from './pages/MyReports';
+import IssueMap from './pages/IssueMap';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/issues" element={<AllIssues />} />
             <Route path="/issues/:id" element={<IssueDetails />} />
             <Route path="/my-reports" element={<MyReports />} />
+            <Route path="/map" element={<IssueMap />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

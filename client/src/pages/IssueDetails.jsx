@@ -67,6 +67,12 @@ const IssueDetails = () => {
     }
   };
 
+  // Open Google Maps with location text
+  const openGoogleMaps = (location) => {
+    const query = encodeURIComponent(location + ', Tamil Nadu, India');
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('en-IN', {
@@ -146,6 +152,38 @@ const IssueDetails = () => {
           <div className="meta-item">
             <strong>Location</strong>
             <span>{issue.location}</span>
+            <a
+              onClick={() => openGoogleMaps(issue.location)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginTop: '8px',
+                padding: '7px 14px',
+                background: '#1A73E8',
+                color: '#fff',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                cursor: 'pointer',
+                textDecoration: 'none',
+                letterSpacing: '0.5px',
+                boxShadow: '0 2px 8px rgba(26,115,232,0.4)',
+                transition: 'all 0.2s ease',
+                border: 'none',
+                width: 'fit-content',
+              }}
+              onMouseOver={e => e.currentTarget.style.background = '#1557b0'}
+              onMouseOut={e => e.currentTarget.style.background = '#1A73E8'}
+            >
+              <img
+                src="https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                alt="maps"
+                style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+              />
+              📍 View on Google Maps
+            </a>
           </div>
           <div className="meta-item">
             <strong>Department Routed</strong>
