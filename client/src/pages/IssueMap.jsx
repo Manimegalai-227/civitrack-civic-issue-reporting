@@ -24,6 +24,7 @@ const IssueMap = () => {
   const [mapSrc, setMapSrc] = useState(
     'https://maps.google.com/maps?q=Chennai,Tamil+Nadu,India&output=embed&z=12'
   );
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     const fetchIssues = async () => {
@@ -31,11 +32,9 @@ const IssueMap = () => {
         const res = await getIssues();
         if (res.success && res.data) {
           setIssues(res.data);
-          // Auto-select first issue
           if (res.data.length > 0) {
-            const first = res.data[0];
-            setSelected(first);
-            loadMap(first.location);
+            setSelected(res.data[0]);
+            updateMap(res.data[0].location);
           }
         }
       } catch (err) {
@@ -47,23 +46,22 @@ const IssueMap = () => {
     fetchIssues();
   }, []);
 
-  const loadMap = (location) => {
+  const updateMap = (location) => {
     const query = encodeURIComponent(location + ', Tamil Nadu, India');
     setMapSrc(`https://maps.google.com/maps?q=${query}&output=embed&z=15`);
   };
 
   const handleSelect = (issue) => {
     setSelected(issue);
-    loadMap(issue.location);
+    updateMap(issue.location);
   };
 
-  const openInGoogleMaps = (location) => {
+  const openGoogleMaps = (location) => {
     const q = encodeURIComponent(location + ', Tamil Nadu, India');
     window.open(`https://www.google.com/maps/search/?api=1&query=${q}`, '_blank');
   };
 
   const filtered = filter === 'All' ? issues : issues.filter(i => i.status === filter);
-
   const stats = {
     total: issues.length,
     pending: issues.filter(i => i.status === 'Pending').length,
@@ -72,243 +70,299 @@ const IssueMap = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      height: 'calc(100vh - 60px)',
-      fontFamily: 'var(--font-sans)',
-      overflow: 'hidden',
-    }}>
+    <div style={{ position: 'relative', width: '100%', height: 'calc(100vh - 60px)', overflow: 'hidden' }}>
 
-      {/* ===== LEFT SIDEBAR ===== */}
+      {/* ============================= */}
+      {/* GOOGLE MAPS — FULL BACKGROUND */}
+      {/* ============================= */}
+      <iframe
+        key={mapSrc}
+        src={mapSrc}
+        title="Google Maps"
+        style={{
+          position: 'absolute',
+          top: 0, left: 0,
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          zIndex: 0,
+        }}
+        allowFullScreen
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+      />
+
+      {/* ============================= */}
+      {/* FLOATING TOP BAR             */}
+      {/* ============================= */}
       <div style={{
-        width: '360px',
-        minWidth: '360px',
-        background: '#1A2233',
+        position: 'absolute',
+        top: '12px',
+        left: sidebarOpen ? '330px' : '12px',
+        right: '12px',
+        zIndex: 100,
+        background: 'rgba(255,255,255,0.95)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: '12px',
+        padding: '12px 18px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+        transition: 'left 0.3s ease',
+        flexWrap: 'wrap',
+      }}>
+        <span style={{ fontSize: '18px' }}>🗺️</span>
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontWeight: 800,
+          fontSize: '13px',
+          color: '#1A2233',
+          marginRight: '8px',
+        }}>CIVITRACK MAP</span>
+
+        {/* Filter pills */}
+        {['All', 'Pending', 'In Progress', 'Resolved'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{
+            padding: '5px 14px',
+            borderRadius: '20px',
+            border: '2px solid',
+            borderColor: filter === f ? (statusColors[f] || '#1A2233') : 'rgba(0,0,0,0.15)',
+            background: filter === f ? (statusColors[f] || '#1A2233') : 'rgba(255,255,255,0.8)',
+            color: filter === f ? '#fff' : '#333',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}>
+            {f === 'All' ? `📍 ALL (${stats.total})`
+              : f === 'Pending' ? `🔴 PENDING (${stats.pending})`
+              : f === 'In Progress' ? `🟠 ACTIVE (${stats.inProgress})`
+              : `🟢 DONE (${stats.resolved})`}
+          </button>
+        ))}
+
+        {/* Selected location open button */}
+        {selected && (
+          <button
+            onClick={() => openGoogleMaps(selected.location)}
+            style={{
+              marginLeft: 'auto',
+              background: '#1A73E8',
+              color: '#fff',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 2px 8px rgba(26,115,232,0.4)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🔗 Navigate in Google Maps
+          </button>
+        )}
+      </div>
+
+      {/* ============================= */}
+      {/* FLOATING LEFT SIDEBAR        */}
+      {/* ============================= */}
+      <div style={{
+        position: 'absolute',
+        top: '12px',
+        left: sidebarOpen ? '12px' : '-320px',
+        bottom: '12px',
+        width: '310px',
+        zIndex: 100,
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
+        transition: 'left 0.3s ease',
+        borderRadius: '14px',
         overflow: 'hidden',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
       }}>
 
-        {/* Header */}
+        {/* Sidebar Header */}
         <div style={{
-          padding: '16px 16px 12px',
-          background: '#111827',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(17,24,39,0.97)',
+          padding: '14px 14px 10px',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
         }}>
-          <div style={{
-            color: '#D98E04',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '10px',
-            letterSpacing: '2px',
-            marginBottom: '4px',
-          }}>
-            CIVITRACK • LIVE ISSUE MAP
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ color: '#D98E04', fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
+              ISSUE TRACKER
+            </span>
+            <button onClick={() => setSidebarOpen(false)} style={{
+              background: 'rgba(255,255,255,0.1)',
+              border: 'none', color: '#fff', borderRadius: '6px',
+              width: '24px', height: '24px', cursor: 'pointer', fontSize: '12px',
+            }}>✕</button>
           </div>
-          <div style={{ color: '#fff', fontWeight: 800, fontSize: '18px', marginBottom: '12px' }}>
-            🗺️ Issue Location Tracker
-          </div>
-
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          {/* Mini stats */}
+          <div style={{ display: 'flex', gap: '6px' }}>
             {[
-              { label: 'Total', value: stats.total, color: '#fff' },
-              { label: 'Pending', value: stats.pending, color: '#FF3B30' },
-              { label: 'Active', value: stats.inProgress, color: '#FF9500' },
-              { label: 'Done', value: stats.resolved, color: '#34C759' },
+              { v: stats.pending, c: '#FF3B30', l: 'Pending' },
+              { v: stats.inProgress, c: '#FF9500', l: 'Active' },
+              { v: stats.resolved, c: '#34C759', l: 'Resolved' },
             ].map(s => (
-              <div key={s.label} style={{
-                flex: 1, background: 'rgba(255,255,255,0.05)',
-                borderRadius: '8px', padding: '8px 4px', textAlign: 'center',
+              <div key={s.l} style={{
+                flex: 1, background: 'rgba(255,255,255,0.06)',
+                borderRadius: '8px', padding: '6px', textAlign: 'center',
+                borderBottom: `3px solid ${s.c}`,
               }}>
-                <div style={{ color: s.color, fontWeight: 900, fontSize: '20px', lineHeight: 1 }}>{s.value}</div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '9px', marginTop: '3px', letterSpacing: '0.5px' }}>{s.label.toUpperCase()}</div>
+                <div style={{ color: s.c, fontWeight: 900, fontSize: '18px', lineHeight: 1 }}>{s.v}</div>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '9px', marginTop: '2px' }}>{s.l.toUpperCase()}</div>
               </div>
-            ))}
-          </div>
-
-          {/* Filter tabs */}
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {['All', 'Pending', 'In Progress', 'Resolved'].map(f => (
-              <button key={f} onClick={() => setFilter(f)} style={{
-                padding: '4px 12px',
-                borderRadius: '20px',
-                border: '1.5px solid',
-                borderColor: filter === f ? statusColors[f] || '#fff' : 'rgba(255,255,255,0.2)',
-                background: filter === f ? (statusColors[f] || 'rgba(255,255,255,0.15)') : 'transparent',
-                color: '#fff',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                letterSpacing: '0.5px',
-              }}>
-                {f.toUpperCase()}
-              </button>
             ))}
           </div>
         </div>
 
         {/* Issue List */}
-        <div style={{ overflowY: 'auto', flex: 1, padding: '8px' }}>
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          background: 'rgba(17,24,39,0.94)',
+          padding: '8px',
+        }}>
           {loading ? (
-            <div style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', padding: '40px', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+            <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '30px', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>
               Loading issues...
             </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '40px', fontSize: '12px' }}>
-              No issues found.
-            </div>
-          ) : (
-            filtered.map(issue => (
-              <div
-                key={issue._id}
-                onClick={() => handleSelect(issue)}
-                style={{
-                  background: selected?._id === issue._id
-                    ? 'rgba(26,115,232,0.3)'
-                    : 'rgba(255,255,255,0.04)',
-                  border: `1.5px solid ${selected?._id === issue._id ? '#1A73E8' : 'rgba(255,255,255,0.08)'}`,
-                  borderLeft: `4px solid ${statusColors[issue.status]}`,
-                  borderRadius: '10px',
-                  padding: '12px',
-                  marginBottom: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  transform: selected?._id === issue._id ? 'translateX(4px)' : 'none',
-                }}
-              >
-                {/* Case number + category */}
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  alignItems: 'center', marginBottom: '6px',
-                }}>
-                  <span style={{
-                    fontFamily: 'var(--font-mono)', fontSize: '10px',
-                    color: 'rgba(255,255,255,0.5)', letterSpacing: '0.5px',
-                  }}>
-                    {issue.caseNumber}
-                  </span>
-                  <span style={{ fontSize: '16px' }}>{categoryEmoji[issue.category]}</span>
-                </div>
-
-                {/* Title */}
-                <div style={{
-                  color: '#fff', fontWeight: 700, fontSize: '13px',
-                  marginBottom: '5px', lineHeight: 1.3,
-                }}>
-                  {issue.title}
-                </div>
-
-                {/* Location */}
-                <div style={{
-                  color: 'rgba(255,255,255,0.55)', fontSize: '11px',
-                  marginBottom: '8px', display: 'flex', alignItems: 'flex-start', gap: '4px',
-                }}>
-                  <span>📍</span>
-                  <span>{issue.location}</span>
-                </div>
-
-                {/* Status + Open Maps button */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{
-                    padding: '3px 10px', borderRadius: '12px',
-                    background: statusColors[issue.status],
-                    color: '#fff', fontSize: '10px', fontWeight: 700,
-                    letterSpacing: '0.5px',
-                  }}>
-                    {issue.status.toUpperCase()}
-                  </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openInGoogleMaps(issue.location); }}
-                    style={{
-                      marginLeft: 'auto',
-                      background: '#1A73E8',
-                      color: '#fff', border: 'none',
-                      padding: '4px 12px', borderRadius: '6px',
-                      fontSize: '10px', fontWeight: 700, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: '4px',
-                      letterSpacing: '0.3px',
-                    }}
-                  >
-                    📍 Open Maps
-                  </button>
-                </div>
+          ) : filtered.map(issue => (
+            <div
+              key={issue._id}
+              onClick={() => handleSelect(issue)}
+              style={{
+                background: selected?._id === issue._id
+                  ? 'rgba(26,115,232,0.25)'
+                  : 'rgba(255,255,255,0.04)',
+                border: `1.5px solid ${selected?._id === issue._id ? '#1A73E8' : 'rgba(255,255,255,0.07)'}`,
+                borderLeft: `4px solid ${statusColors[issue.status]}`,
+                borderRadius: '10px',
+                padding: '11px',
+                marginBottom: '7px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                transform: selected?._id === issue._id ? 'translateX(3px)' : 'none',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.5px' }}>
+                  {issue.caseNumber}
+                </span>
+                <span style={{ fontSize: '14px' }}>{categoryEmoji[issue.category]}</span>
               </div>
-            ))
-          )}
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: '13px', marginBottom: '4px', lineHeight: 1.3 }}>
+                {issue.title}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', marginBottom: '8px', display: 'flex', gap: '4px' }}>
+                <span>📍</span><span>{issue.location}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{
+                  padding: '2px 8px', borderRadius: '10px',
+                  background: statusColors[issue.status],
+                  color: '#fff', fontSize: '9px', fontWeight: 700, letterSpacing: '0.5px',
+                }}>
+                  {issue.status.toUpperCase()}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); openGoogleMaps(issue.location); }}
+                  style={{
+                    marginLeft: 'auto',
+                    background: '#1A73E8', color: '#fff',
+                    border: 'none', padding: '3px 10px',
+                    borderRadius: '6px', fontSize: '10px',
+                    fontWeight: 700, cursor: 'pointer',
+                  }}
+                >
+                  📍 Maps
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ===== RIGHT — REAL GOOGLE MAPS IFRAME ===== */}
-      <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
-
-        {/* Selected issue banner */}
-        {selected && (
-          <div style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0,
-            zIndex: 100,
-            background: 'rgba(26,34,51,0.88)',
-            backdropFilter: 'blur(10px)',
-            padding: '10px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            borderBottom: `3px solid ${statusColors[selected.status]}`,
-          }}>
-            <span style={{ fontSize: '20px' }}>{categoryEmoji[selected.category]}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                color: '#fff', fontWeight: 700, fontSize: '14px',
-              }}>
-                {selected.title}
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>
-                📍 {selected.location}
-              </div>
-            </div>
-            <span style={{
-              padding: '4px 14px', borderRadius: '20px',
-              background: statusColors[selected.status],
-              color: '#fff', fontSize: '11px', fontWeight: 700,
-            }}>
-              {selected.status}
-            </span>
-            <button
-              onClick={() => openInGoogleMaps(selected.location)}
-              style={{
-                background: '#1A73E8', color: '#fff',
-                border: 'none', padding: '8px 16px',
-                borderRadius: '8px', fontSize: '12px',
-                fontWeight: 700, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '6px',
-                boxShadow: '0 2px 8px rgba(26,115,232,0.4)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              🔗 Open Full Google Maps
-            </button>
-          </div>
-        )}
-
-        {/* Real Google Maps Embed */}
-        <iframe
-          key={mapSrc}
-          src={mapSrc}
-          title="Google Maps"
-          width="100%"
-          height="100%"
+      {/* Toggle sidebar button (when closed) */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
           style={{
-            border: 'none',
-            flex: 1,
-            marginTop: selected ? '57px' : '0',
+            position: 'absolute',
+            top: '12px', left: '12px',
+            zIndex: 100,
+            background: 'rgba(17,24,39,0.92)',
+            color: '#fff', border: 'none',
+            padding: '10px 16px',
+            borderRadius: '10px',
+            cursor: 'pointer',
+            fontSize: '13px', fontWeight: 700,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+            display: 'flex', alignItems: 'center', gap: '6px',
           }}
-          allowFullScreen
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
-      </div>
+        >
+          📋 Issues
+        </button>
+      )}
+
+      {/* ============================= */}
+      {/* SELECTED ISSUE BOTTOM CARD   */}
+      {/* ============================= */}
+      {selected && (
+        <div style={{
+          position: 'absolute',
+          bottom: '20px',
+          left: sidebarOpen ? '340px' : '12px',
+          right: '12px',
+          zIndex: 100,
+          background: 'rgba(255,255,255,0.96)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: '14px',
+          padding: '14px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+          borderLeft: `5px solid ${statusColors[selected.status]}`,
+          transition: 'left 0.3s ease',
+        }}>
+          <span style={{ fontSize: '24px' }}>{categoryEmoji[selected.category]}</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: '14px', color: '#1A2233', marginBottom: '2px' }}>
+              {selected.title}
+            </div>
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              📍 {selected.location}
+            </div>
+          </div>
+          <span style={{
+            padding: '5px 14px', borderRadius: '20px',
+            background: statusColors[selected.status],
+            color: '#fff', fontSize: '11px', fontWeight: 700,
+          }}>
+            {selected.status}
+          </span>
+          <button
+            onClick={() => openGoogleMaps(selected.location)}
+            style={{
+              background: '#1A73E8', color: '#fff',
+              border: 'none', padding: '10px 20px',
+              borderRadius: '10px', fontSize: '13px',
+              fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 3px 10px rgba(26,115,232,0.4)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🔗 Open in Google Maps
+          </button>
+        </div>
+      )}
     </div>
   );
 };
